@@ -12,7 +12,7 @@ from sqlalchemy.orm import Session
 from app.models.models import (
     Base, engine, SessionLocal, User, Camp, CampState, Place, FloodZone,
     Road, RescueResource, RiverReading, WeatherObservation, SyncEvent, ResourceStock,
-    RescueDirective, AuthorityInstruction
+    RescueDirective, AuthorityInstruction, EvacuationGroup, Approval
 )
 
 pwd_context = CryptContext(schemes=["bcrypt"], deprecated="auto")
@@ -531,6 +531,270 @@ def seed_database(db: Session):
             radio_script="All residents of Sector 4 and surrounding riverbanks, please move calmly toward St. Aloysius School A.",
             published_by="District Disaster Management Authority"
         ))
+
+    # 10. Evacuation Groups
+    initial_groups = [
+        {
+            "group_id": "grp_ndrf_charlie",
+            "name": "NDRF Boat Squad Charlie",
+            "source_zone": "velachery",
+            "source_zone_id": "ZONE-2",
+            "destination_camp": "camp_01",
+            "assigned_camp_id": "camp_01",
+            "group_type": "boat",
+            "population": 85,
+            "boats_count": 3,
+            "personnel_count": 8,
+            "air_drop_kits": 0,
+            "vehicles_count": 1,
+            "eta": "12 mins",
+            "status": "waiting",
+            "location_name": "Velachery Ward 178 / Pallikaranai Marsh Edge"
+        },
+        {
+            "group_id": "grp_sdrf_alpha",
+            "name": "SDRF Tactical Rescue Team 2",
+            "source_zone": "mudichur",
+            "source_zone_id": "ZONE-2",
+            "destination_camp": "camp_02",
+            "assigned_camp_id": "camp_02",
+            "group_type": "ground_team",
+            "population": 120,
+            "boats_count": 1,
+            "personnel_count": 12,
+            "air_drop_kits": 0,
+            "vehicles_count": 2,
+            "eta": "18 mins",
+            "status": "waiting",
+            "location_name": "Mudichur High Road / Varadharajapuram"
+        },
+        {
+            "group_id": "grp_iaf_air_drop",
+            "name": "IAF Drone Air-Drop Squadron",
+            "source_zone": "saidapet",
+            "source_zone_id": "ZONE-3",
+            "destination_camp": "camp_03",
+            "assigned_camp_id": "camp_03",
+            "group_type": "air_supply",
+            "population": 65,
+            "boats_count": 0,
+            "personnel_count": 4,
+            "air_drop_kits": 25,
+            "vehicles_count": 0,
+            "eta": "8 mins",
+            "status": "moving",
+            "location_name": "Saidapet Maraimalai Adigal Bridge Lowlands"
+        },
+        {
+            "group_id": "grp_amphibious_truck",
+            "name": "Amphibious Evac Convoy Delta",
+            "source_zone": "perumbakkam",
+            "source_zone_id": "ZONE-4",
+            "destination_camp": "camp_04",
+            "assigned_camp_id": "camp_04",
+            "group_type": "high_truck",
+            "population": 140,
+            "boats_count": 0,
+            "personnel_count": 10,
+            "air_drop_kits": 0,
+            "vehicles_count": 4,
+            "eta": "15 mins",
+            "status": "moving",
+            "location_name": "Perumbakkam Housing Board Sector"
+        },
+        {
+            "group_id": "grp_coastguard_echo",
+            "name": "Indian Coast Guard Inflatable Fleet Echo",
+            "source_zone": "kolathur",
+            "source_zone_id": "ZONE-1",
+            "destination_camp": "camp_01",
+            "assigned_camp_id": "camp_01",
+            "group_type": "boat",
+            "population": 95,
+            "boats_count": 4,
+            "personnel_count": 14,
+            "air_drop_kits": 0,
+            "vehicles_count": 1,
+            "eta": "Arrived",
+            "status": "arrived",
+            "location_name": "Kolathur Lake Spillway Basin"
+        },
+        {
+            "group_id": "grp_tn_fire_foxtrot",
+            "name": "TN Fire & Rescue Quick Response Foxtrot",
+            "source_zone": "sholinganallur",
+            "source_zone_id": "ZONE-6",
+            "destination_camp": "camp_02",
+            "assigned_camp_id": "camp_02",
+            "group_type": "ground_team",
+            "population": 75,
+            "boats_count": 1,
+            "personnel_count": 8,
+            "air_drop_kits": 0,
+            "vehicles_count": 2,
+            "eta": "Arrived",
+            "status": "arrived",
+            "location_name": "OMR Canal Embankment"
+        }
+    ]
+
+    for g_data in initial_groups:
+        grp = db.query(EvacuationGroup).filter(EvacuationGroup.group_id == g_data["group_id"]).first()
+        if not grp:
+            db.add(EvacuationGroup(
+                group_id=g_data["group_id"],
+                name=g_data["name"],
+                source_zone=g_data["source_zone"],
+                source_zone_id=g_data["source_zone_id"],
+                destination_camp=g_data["destination_camp"],
+                assigned_camp_id=g_data["assigned_camp_id"],
+                group_type=g_data["group_type"],
+                population=g_data["population"],
+                boats_count=g_data["boats_count"],
+                personnel_count=g_data["personnel_count"],
+                air_drop_kits=g_data["air_drop_kits"],
+                vehicles_count=g_data["vehicles_count"],
+                eta=g_data["eta"],
+                status=g_data["status"],
+                location_name=g_data["location_name"]
+            ))
+
+    # 11. Approvals (Pending & Audited History)
+    initial_approvals = [
+        {
+            "id": "app_boat_dispatch_01",
+            "type": "dispatch",
+            "payload": {
+                "unit_id": "TEAM-1",
+                "unit_name": "NDRF Squad 1",
+                "zone_id": "ZONE-2",
+                "zone_name": "Velachery Lowlands",
+                "boats": 2,
+                "people": 60,
+                "priority": "CRITICAL"
+            },
+            "reason": "Authorize urgent deployment of 2 Motorized Inflatable Rescue Boats to Velachery Sector 4 due to projected 65cm flash flood depth.",
+            "confidence": 0.94,
+            "status": "pending",
+            "decided_by": None,
+            "decision_note": None,
+            "decided_at": None
+        },
+        {
+            "id": "app_camp_redirect_02",
+            "type": "camp_redirect",
+            "payload": {
+                "from_camp_id": "camp_01",
+                "from_camp_name": "St. Aloysius School A",
+                "to_camp_id": "camp_04",
+                "to_camp_name": "District Sports Stadium D",
+                "people": 120,
+                "from_before": 700,
+                "from_capacity": 1000,
+                "to_free": 1950
+            },
+            "reason": "Divert incoming evacuation convoy (120 citizens) from St. Aloysius School A (88% occupancy threshold reached) to District Sports Stadium D.",
+            "confidence": 0.91,
+            "status": "pending",
+            "decided_by": None,
+            "decision_note": None,
+            "decided_at": None
+        },
+        {
+            "id": "app_emergency_supply_03",
+            "type": "supply",
+            "payload": {
+                "camp_id": "camp_02",
+                "camp_name": "Govt High School Edathua B",
+                "item": "water_packets",
+                "quantity": 3000,
+                "transport": "air_drop"
+            },
+            "reason": "Emergency air-drop supply requisition: Dispatch 3,000 clean drinking water packets and 150 pediatric medical kits to Mudichur relief camp.",
+            "confidence": 0.88,
+            "status": "pending",
+            "decided_by": None,
+            "decision_note": None,
+            "decided_at": None
+        },
+        {
+            "id": "app_ai_camp_proposal_04",
+            "type": "ai_camp_proposal",
+            "payload": {
+                "candidate_id": "cand_guru_nanak",
+                "name": "Guru Nanak College Indoor Auditorium",
+                "capacity": 1500,
+                "area": "Velachery",
+                "elevation_m": 14.5
+            },
+            "reason": "Activate Guru Nanak College Indoor Auditorium as auxiliary overflow relief center for Adyar Basin flood evacuees.",
+            "confidence": 0.96,
+            "status": "pending",
+            "decided_by": None,
+            "decision_note": None,
+            "decided_at": None
+        },
+        {
+            "id": "app_hist_transfer_01",
+            "type": "transfer",
+            "payload": {
+                "from_camp_id": "camp_05",
+                "to_camp_id": "camp_03",
+                "people": 80
+            },
+            "reason": "Precautionary transfer of 80 vulnerable evacuees from Riverside Shelter to Kuttanad Community Hall C due to river gauge surge.",
+            "confidence": 0.95,
+            "status": "approved",
+            "decided_by": "District Collector",
+            "decision_note": "Approved and executed via South Bypass corridor.",
+            "decided_at": now
+        },
+        {
+            "id": "app_hist_dispatch_02",
+            "type": "dispatch",
+            "payload": {
+                "unit_id": "TEAM-4",
+                "unit_name": "NDRF Squad 4",
+                "zone_id": "ZONE-5"
+            },
+            "reason": "Deploy amphibious tactical reconnaissance team to North Ridge for road passability verification.",
+            "confidence": 0.85,
+            "status": "approved",
+            "decided_by": "District Collector",
+            "decision_note": "Authorized routine tactical sweep.",
+            "decided_at": now
+        },
+        {
+            "id": "app_hist_reject_03",
+            "type": "dispatch",
+            "payload": {
+                "unit_id": "TEAM-8",
+                "unit_name": "NDRF Squad 8",
+                "zone_id": "ZONE-8"
+            },
+            "reason": "Deploy non-motorized rubber raft to Confluence Wetland during peak discharge torrent.",
+            "confidence": 0.62,
+            "status": "rejected",
+            "decided_by": "District Collector",
+            "decision_note": "Rejected due to extreme water current speed. Heavy motorized vessel required instead.",
+            "decided_at": now
+        }
+    ]
+
+    for a_data in initial_approvals:
+        app_rec = db.query(Approval).filter(Approval.id == a_data["id"]).first()
+        if not app_rec:
+            db.add(Approval(
+                id=a_data["id"],
+                type=a_data["type"],
+                payload=a_data["payload"],
+                reason=a_data["reason"],
+                confidence=a_data["confidence"],
+                status=a_data["status"],
+                decided_by=a_data["decided_by"],
+                decision_note=a_data["decision_note"],
+                decided_at=a_data["decided_at"]
+            ))
 
     db.commit()
     print("[Seed] Synthetic district 'Baran River Basin' seeded successfully!")
