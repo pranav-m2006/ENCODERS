@@ -1,0 +1,32 @@
+{
+  "name": "merge_test_vectors",
+  "description": "Validates commutative delta arrival merging across offline devices regardless of event arrival order",
+  "initial_state": {
+    "camp_id": "camp_A",
+    "occupied": 700,
+    "capacity": 1000
+  },
+  "device_1_events": [
+    {
+      "event_id": "018f2d5e-0002-7000-8000-000000000001",
+      "device_id": "CAMP-A-TAB-1",
+      "type": "CAMP_ARRIVAL",
+      "entity_id": "camp_A",
+      "payload": { "count": 100 },
+      "occurred_at": "2026-09-24T10:10:00Z"
+    }
+  ],
+  "device_2_events": [
+    {
+      "event_id": "018f2d5e-0002-7000-8000-000000000002",
+      "device_id": "CAMP-A-TAB-2",
+      "type": "CAMP_ARRIVAL",
+      "entity_id": "camp_A",
+      "payload": { "count": 50 },
+      "occurred_at": "2026-09-24T10:15:00Z"
+    }
+  ],
+  "expected_final_occupied": 850,
+  "order_1": ["device_1_events", "device_2_events"],
+  "order_2": ["device_2_events", "device_1_events"]
+}

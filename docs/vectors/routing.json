@@ -1,0 +1,52 @@
+{
+  "name": "routing_test_vectors",
+  "description": "Validates graph edge multipliers, blocked road exclusion, and fail-safe routing",
+  "edge_penalties": {
+    "SAFE": 1.0,
+    "CAUTION": 2.5,
+    "UNKNOWN": 4.0,
+    "BLOCKED": null
+  },
+  "tests": [
+    {
+      "id": "test_blocked_road_excluded_and_reroute",
+      "nodes": ["A", "B", "C"],
+      "edges": [
+        { "from": "A", "to": "B", "length_km": 5, "status": "BLOCKED" },
+        { "from": "A", "to": "C", "length_km": 4, "status": "SAFE" },
+        { "from": "C", "to": "B", "length_km": 4, "status": "SAFE" }
+      ],
+      "origin": "A",
+      "destination": "B",
+      "expected_path": ["A", "C", "B"],
+      "expected_effective_cost": 8.0,
+      "expected_status": "SUCCESS"
+    },
+    {
+      "id": "test_no_safe_route_when_all_blocked",
+      "nodes": ["A", "B"],
+      "edges": [
+        { "from": "A", "to": "B", "length_km": 5, "status": "BLOCKED" }
+      ],
+      "origin": "A",
+      "destination": "B",
+      "expected_path": null,
+      "expected_status": "NO_SAFE_ROUTE"
+    },
+    {
+      "id": "test_prefers_caution_over_unknown_when_shorter",
+      "nodes": ["A", "B", "C", "D"],
+      "edges": [
+        { "from": "A", "to": "C", "length_km": 10, "status": "CAUTION" },
+        { "from": "C", "to": "B", "length_km": 0, "status": "SAFE" },
+        { "from": "A", "to": "D", "length_km": 10, "status": "UNKNOWN" },
+        { "from": "D", "to": "B", "length_km": 0, "status": "SAFE" }
+      ],
+      "origin": "A",
+      "destination": "B",
+      "expected_path": ["A", "C", "B"],
+      "caution_effective_cost": 25.0,
+      "unknown_effective_cost": 40.0
+    }
+  ]
+}

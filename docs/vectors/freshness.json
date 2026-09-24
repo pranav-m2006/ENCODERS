@@ -1,0 +1,53 @@
+{
+  "name": "freshness_test_vectors",
+  "description": "Validates data status computation from as_of timestamps and road fail-safe asymmetry",
+  "reference_now": "2026-09-24T12:00:00Z",
+  "tests": [
+    {
+      "source_type": "river_gauge",
+      "as_of": "2026-09-24T11:45:00Z",
+      "age_minutes": 15,
+      "expected_status": "LIVE"
+    },
+    {
+      "source_type": "river_gauge",
+      "as_of": "2026-09-24T11:25:00Z",
+      "age_minutes": 35,
+      "expected_status": "STALE"
+    },
+    {
+      "source_type": "weather_observation",
+      "as_of": "2026-09-24T10:45:00Z",
+      "age_minutes": 75,
+      "expected_status": "STALE"
+    },
+    {
+      "source_type": "satellite_pass",
+      "as_of": "2026-09-23T11:00:00Z",
+      "age_minutes": 1500,
+      "expected_status": "STALE"
+    },
+    {
+      "source_type": "evacuation_group",
+      "as_of": "2026-09-24T05:30:00Z",
+      "age_minutes": 390,
+      "expected_status": "LOST_CONTACT"
+    },
+    {
+      "source_type": "road_report",
+      "raw_status": "BLOCKED",
+      "as_of": "2026-09-24T04:00:00Z",
+      "age_minutes": 480,
+      "expected_effective_status": "BLOCKED",
+      "rule": "Stale BLOCKED remains BLOCKED"
+    },
+    {
+      "source_type": "road_report",
+      "raw_status": "SAFE",
+      "as_of": "2026-09-24T04:00:00Z",
+      "age_minutes": 480,
+      "expected_effective_status": "CAUTION",
+      "rule": "Stale SAFE degrades to CAUTION"
+    }
+  ]
+}

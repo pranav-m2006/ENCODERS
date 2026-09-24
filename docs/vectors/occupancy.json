@@ -1,0 +1,98 @@
+{
+  "name": "occupancy_test_vectors",
+  "description": "Validates camp capacity math, delta arrivals, commutativity, idempotency, and negative occupancy prevention",
+  "tests": [
+    {
+      "id": "test_700_plus_100_is_800",
+      "initial_occupied": 700,
+      "capacity": 1000,
+      "events": [
+        {
+          "event_id": "018f2d5e-0001-7000-8000-000000000001",
+          "type": "CAMP_ARRIVAL",
+          "entity_id": "camp_A",
+          "payload": { "count": 100 }
+        }
+      ],
+      "expected_occupied": 800,
+      "expected_available": 200,
+      "expected_fill_band": "AMBER"
+    },
+    {
+      "id": "test_700_plus_100_plus_50_is_850",
+      "initial_occupied": 700,
+      "capacity": 1000,
+      "events": [
+        {
+          "event_id": "018f2d5e-0001-7000-8000-000000000001",
+          "type": "CAMP_ARRIVAL",
+          "entity_id": "camp_A",
+          "payload": { "count": 100 }
+        },
+        {
+          "event_id": "018f2d5e-0001-7000-8000-000000000002",
+          "type": "CAMP_ARRIVAL",
+          "entity_id": "camp_A",
+          "payload": { "count": 50 }
+        }
+      ],
+      "expected_occupied": 850,
+      "expected_available": 150,
+      "expected_fill_band": "AMBER"
+    },
+    {
+      "id": "test_duplicate_event_is_idempotent",
+      "initial_occupied": 700,
+      "capacity": 1000,
+      "events": [
+        {
+          "event_id": "018f2d5e-0001-7000-8000-000000000001",
+          "type": "CAMP_ARRIVAL",
+          "entity_id": "camp_A",
+          "payload": { "count": 100 }
+        },
+        {
+          "event_id": "018f2d5e-0001-7000-8000-000000000001",
+          "type": "CAMP_ARRIVAL",
+          "entity_id": "camp_A",
+          "payload": { "count": 100 }
+        }
+      ],
+      "expected_occupied": 800,
+      "expected_result_second_event": "DUPLICATE"
+    },
+    {
+      "id": "test_negative_occupancy_creates_conflict",
+      "initial_occupied": 20,
+      "capacity": 1000,
+      "events": [
+        {
+          "event_id": "018f2d5e-0001-7000-8000-000000000003",
+          "type": "CAMP_DEPARTURE",
+          "entity_id": "camp_A",
+          "payload": { "count": 50 }
+        }
+      ],
+      "expected_occupied": 20,
+      "expected_result": "CONFLICT",
+      "expected_conflict_type": "NEGATIVE_OCCUPANCY"
+    },
+    {
+      "id": "test_overcapacity_arrival_applied_and_alerted",
+      "initial_occupied": 950,
+      "capacity": 1000,
+      "events": [
+        {
+          "event_id": "018f2d5e-0001-7000-8000-000000000004",
+          "type": "CAMP_ARRIVAL",
+          "entity_id": "camp_A",
+          "payload": { "count": 100 }
+        }
+      ],
+      "expected_occupied": 1050,
+      "expected_result": "APPLIED",
+      "expected_fill_band": "RED",
+      "expected_alert": "OVERCAPACITY"
+    }
+  ]
+}

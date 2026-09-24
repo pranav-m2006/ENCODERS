@@ -1,0 +1,78 @@
+{
+  "name": "redirect_test_vectors",
+  "description": "Validates split recommendation logic when camp exceeds safe_fill_limit (90%)",
+  "tests": [
+    {
+      "id": "test_900_plus_180_splits_100_80",
+      "camps": [
+        {
+          "id": "camp_A",
+          "name": "Central School",
+          "capacity": 1000,
+          "occupied": 900,
+          "status": "OPEN",
+          "risk": "LOW"
+        },
+        {
+          "id": "camp_B",
+          "name": "Highland Community Center",
+          "capacity": 600,
+          "occupied": 200,
+          "status": "OPEN",
+          "risk": "LOW"
+        }
+      ],
+      "incoming_group": {
+        "id": "grp_17",
+        "count": 180,
+        "target_camp_id": "camp_A"
+      },
+      "roads": [
+        { "from": "origin", "to": "camp_A", "status": "SAFE" },
+        { "from": "origin", "to": "camp_B", "status": "SAFE" },
+        { "from": "camp_A", "to": "camp_B", "status": "SAFE" }
+      ],
+      "expected_decision": "CAMP_REDIRECT",
+      "expected_allocations": [
+        { "camp_id": "camp_A", "count": 100 },
+        { "camp_id": "camp_B", "count": 80 }
+      ],
+      "expected_resulting_occupancy": {
+        "camp_A": 1000,
+        "camp_B": 280
+      }
+    },
+    {
+      "id": "test_no_viable_allocation_when_alternative_blocked",
+      "camps": [
+        {
+          "id": "camp_A",
+          "name": "Central School",
+          "capacity": 1000,
+          "occupied": 950,
+          "status": "OPEN",
+          "risk": "LOW"
+        },
+        {
+          "id": "camp_B",
+          "name": "Highland Community Center",
+          "capacity": 600,
+          "occupied": 200,
+          "status": "OPEN",
+          "risk": "LOW"
+        }
+      ],
+      "incoming_group": {
+        "id": "grp_18",
+        "count": 100,
+        "target_camp_id": "camp_A"
+      },
+      "roads": [
+        { "from": "origin", "to": "camp_A", "status": "SAFE" },
+        { "from": "origin", "to": "camp_B", "status": "BLOCKED" }
+      ],
+      "expected_status": "NO_VIABLE_ALTERNATIVE",
+      "expected_fallback": "ARRIVE_WITH_OVERCAPACITY_ALERT"
+    }
+  ]
+}
