@@ -7,6 +7,7 @@
  * - Emergency outbox export to JSON file
  */
 import { db, StoredEvent, StoredSnapshot } from './db';
+import { PublicCamp } from '../lib/types';
 
 export type ConnectionState = 'ONLINE' | 'DEGRADED' | 'OFFLINE' | 'SIMULATED_OFFLINE';
 
@@ -16,7 +17,7 @@ class SyncEngine {
   private apiBase = typeof window !== 'undefined' && import.meta.env.VITE_API_BASE
     ? `${import.meta.env.VITE_API_BASE.replace(/\/api\/?$/, '')}/api/v1`
     : '/api/v1';
-  private syncTimer: any = null;
+  private syncTimer: ReturnType<typeof setInterval> | null = null;
 
   constructor() {
     this.startPeriodicSync();
@@ -116,7 +117,7 @@ class SyncEngine {
       if (bootRes.ok) {
         const bootBody = await bootRes.json().catch(() => null);
         const bootData = bootBody?.data || {};
-        const campsMap: Record<string, any> = {};
+        const campsMap: Record<string, PublicCamp> = {};
         for (const c of bootData.camps || []) {
           campsMap[c.camp_id] = c;
         }

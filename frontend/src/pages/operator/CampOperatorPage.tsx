@@ -86,10 +86,10 @@ export const CampOperatorPage: React.FC = () => {
 
   // Update directive status mutation
   const updateDirectiveMutation = useMutation({
-    mutationFn: async ({ id, status, notes, arrivedCount }: { id: string; status: any; notes?: string; arrivedCount?: number }) => {
-      return api.patch(`/operator/directives/${id}/status`, { status, operator_notes: notes, arrived_count: arrivedCount });
+    mutationFn: async ({ id, status, notes, arrivedCount }: { id: string; status: string; notes?: string; arrivedCount?: number }) => {
+      return api.patch<{ id: string; status: string }>(`/operator/directives/${id}/status`, { status, operator_notes: notes, arrived_count: arrivedCount });
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: { id: string; status: string }) => {
       showToast(`Directive ${data.id} updated to status: ${data.status.toUpperCase()}`);
       queryClient.invalidateQueries({ queryKey: ['operatorDirectives'] });
       queryClient.invalidateQueries({ queryKey: ['rescueUnits'] });
@@ -172,8 +172,8 @@ export const CampOperatorPage: React.FC = () => {
         selectedCampId
       );
       setOfflineRouteResult(res);
-    } catch (e: any) {
-      alert(e.message || 'Routing calculation failed');
+    } catch (e: unknown) {
+      alert(e instanceof Error ? e.message : 'Routing calculation failed');
     } finally {
       setIsRouting(false);
     }
